@@ -1,53 +1,111 @@
 <!DOCTYPE html>
 <html>
-
   <head>
-    <meta charset='utf-8' />
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="tapl-study : " />
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
 
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
 
-    <title>tapl-study</title>
+    <title>tapl-study by iitaku</title>
   </head>
 
   <body>
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/iitaku/tapl-study">View on GitHub</a>
+    <header>
+      <div class="container">
+        <h1>tapl-study</h1>
+        <h2></h2>
 
-          <h1 id="project_title">tapl-study</h1>
-          <h2 id="project_tagline"></h2>
+        <section id="downloads">
+          <a href="https://github.com/iitaku/tapl-study/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/iitaku/tapl-study/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/iitaku/tapl-study" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        </section>
+      </div>
+    </header>
 
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/iitaku/tapl-study/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/iitaku/tapl-study/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
+    <div class="container">
+      <section id="main_content">
         <h1>
-<a name="-x" class="anchor" href="#-x"><span class="octicon octicon-link"></span></a>型システム勉強会 第x回</h1>
+<a name="x-" class="anchor" href="#x-"><span class="octicon octicon-link"></span></a>第X回 型システム入門勉強会</h1>
+
+<h1>
+<a name="5-" class="anchor" href="#5-"><span class="octicon octicon-link"></span></a>第5章 型無しラムダ計算</h1>
+
+<h2>
+<a name="" class="anchor" href="#"><span class="octicon octicon-link"></span></a>おさらい</h2>
+
+<p>Q1. ラムダ計算ってなんですか？</p>
+
+<p>関数とその適用規則のみで表現された数理体系のことです。
+文法は以下のとおり。</p>
+
+<pre><code>t ::=                     項:
+      x                 変数
+      \x.t        ラムダ抽象
+      t t           関数適用
+</code></pre>
+
+<p>たった4行の短い文法ですが、あらゆる計算を表現可能です。</p>
+
+<p>Q2. どのへんが「形無し」なんですか？</p>
+
+<p>そもそも本書における「型」について学んでないので「型無し」と言われても・・・という感じではありますが、
+「項の定義において、右辺に再帰的に現れる項についていかなる制限も存在しないこと」
+と捉えてよいと思います。</p>
+
+<p>5.2「ラムダ計算でのプログラミング」ではChrch数の定義とその計算体系についてまとめられていました。</p>
+
+<p>この体系は直感とは反する動きをする事があります。
+たとえば、Chrchブール値は真偽値を表し、Chrch数は整数値を表していました。</p>
+
+<pre><code>tru = \t -&gt; \f -&gt; t
+c0 = \s -&gt; \z -&gt; z
+</code></pre>
+
+<p>さらに、加算plusの定義は以下のとおり:</p>
+
+<pre><code>plus = \m -&gt; \n -&gt; \s -&gt; \z -&gt; m s (n s z)
+</code></pre>
+
+<p>この定義において、plus tru c0という項は、ラムダ計算上は評価可能です。</p>
+
+<pre><code>plus tru c0 = ((\m -&gt; \n -&gt; \s -&gt; \z -&gt; m s (n s z)) tru) c0
+            = (\n -&gt; \s -&gt; \z -&gt; tru s (n s z)) c0
+            = \s -&gt; \z -&gt; tru s (c0 s z)
+            = \s -&gt; \z -&gt; c0 s z
+            = \s -&gt; \z -&gt; z
+</code></pre>
+
+<p>最終的にc0と等価なラムダ抽象へと簡約されていますが、これは明らかに直感に反しています。
+そもそも真偽値と整数値を加算できること自体が、起きてはならない事象なのですから。
+これは関数に型が無いゆえに起きる問題です。</p>
+
+<hr><p>と書いたところで、p.43の値呼び戦略の評価の完了を見ていてふと疑問が・・・</p>
+
+<pre><code>id (id (\z -&gt; id z)) = id (\z -&gt; id z)
+                     = \z -&gt; id z (完了)
+</code></pre>
+
+<p>なんでid zはzへと簡約されないのでしょうか？</p>
+
+<ul>
+<li>zが閉じた項ではないから</li>
+<li>抽象内部での簡約を許さないから</li>
+</ul><p>これをふまえると、簡約基(tru s (c1 s z)をc0 s zへと監訳していいものか甚だ疑問ですが、
+するとplus c0 c1のような妥当な式もc2へ簡約できません。</p>
+
+<p>何が間違っているのでしょうか？</p>
 
 <h2>
 <a name="53-" class="anchor" href="#53-"><span class="octicon octicon-link"></span></a>5.3 形式的議論</h2>
+
+<p>まずラムダ計算の構文を形式的に定義する。</p>
       </section>
     </div>
 
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">tapl-study maintained by <a href="https://github.com/iitaku">iitaku</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
-      </footer>
-    </div>
-
     
-
   </body>
 </html>
