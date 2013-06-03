@@ -42,11 +42,13 @@
 <p>関数とその適用規則のみで表現された数理体系のことです。
 文法は以下のとおり。</p>
 
+<blockquote>
 <pre><code>t ::=                     項:
       x                 変数
-      \x.t        ラムダ抽象
+      λx.t        ラムダ抽象
       t t           関数適用
 </code></pre>
+</blockquote>
 
 <p>たった4行の短い文法ですが、あらゆる計算を表現可能です。</p>
 
@@ -61,48 +63,140 @@
 <p>この体系は直感とは反する動きをする事があります。
 たとえば、Chrchブール値は真偽値を表し、Chrch数は整数値を表していました。</p>
 
-<pre><code>tru = \t -&gt; \f -&gt; t
-c0 = \s -&gt; \z -&gt; z
+<blockquote>
+<pre><code>tru = λt. λf. t;
+c0 = λs. λz. z;
 </code></pre>
+</blockquote>
 
 <p>さらに、加算plusの定義は以下のとおり:</p>
 
-<pre><code>plus = \m -&gt; \n -&gt; \s -&gt; \z -&gt; m s (n s z)
+<blockquote>
+<pre><code>plus= λm. λn. λs. λz. m s (n s z);
 </code></pre>
+</blockquote>
 
 <p>この定義において、plus tru c0という項は、ラムダ計算上は評価可能です。</p>
 
-<pre><code>plus tru c0 = ((\m -&gt; \n -&gt; \s -&gt; \z -&gt; m s (n s z)) tru) c0
-            = (\n -&gt; \s -&gt; \z -&gt; tru s (n s z)) c0
-            = \s -&gt; \z -&gt; tru s (c0 s z)
-            = \s -&gt; \z -&gt; c0 s z
-            = \s -&gt; \z -&gt; z
+<pre><code>plus tru c0 = ((λm. λn. λs. λz. m s (n s z)) tru) c0
+            = (λn. λs. λz. tru s (n s z)) c0
+            = λs. λz. tru s (c0 s z)
+            = λs. λz. c0 s z
+            = λs. λz. z
 </code></pre>
 
 <p>最終的にc0と等価なラムダ抽象へと簡約されていますが、これは明らかに直感に反しています。
 そもそも真偽値と整数値を加算できること自体が、起きてはならない事象なのですから。
-これは関数に型が無いゆえに起きる問題です。</p>
+これはラムダ抽象に型が無いゆえに起きる問題です。</p>
 
 <hr><p>と書いたところで、p.43の値呼び戦略の評価の完了を見ていてふと疑問が・・・</p>
 
-<pre><code>id (id (\z -&gt; id z)) = id (\z -&gt; id z)
-                     = \z -&gt; id z (完了)
+<blockquote>
+<pre><code>   id (id (λz. id z))
+ = id (λz. id z)
+ = λz. id z
+ // 簡約完了
 </code></pre>
+</blockquote>
 
-<p>なんでid zはzへと簡約されないのでしょうか？</p>
+<p>なんでλz. id zはλz . zへと簡約されないのでしょうか？</p>
 
 <ul>
-<li>zが閉じた項ではないから</li>
-<li>抽象内部での簡約を許さないから</li>
+<li>zが閉じた項ではないから？</li>
+<li>抽象内部での簡約を許さないから？</li>
 </ul><p>これをふまえると、簡約基(tru s (c1 s z)をc0 s zへと監訳していいものか甚だ疑問ですが、
-するとplus c0 c1のような妥当な式もc2へ簡約できません。</p>
+するとplus c0 c1のような妥当な項もc2へ簡約できません。</p>
 
 <p>何が間違っているのでしょうか？</p>
 
 <h2>
 <a name="53-" class="anchor" href="#53-"><span class="octicon octicon-link"></span></a>5.3 形式的議論</h2>
 
-<p>まずラムダ計算の構文を形式的に定義する。</p>
+<p>まずラムダ計算の構文を形式的に定義します。</p>
+
+<blockquote>
+<p>定義 5.3.1.[項] V を変数名の可算集合とする。項の集合は以下を満たす最小の集合 T である。
+(1) 任意のx∈ V についてx∈ T
+(2) t1 ∈T かつx∈V ならば、λx.t1 ∈T
+(3) t1 ∈T かつt2 ∈T ならば、t1t2 ∈T</p>
+</blockquote>
+
+<p>ここで、**項のサイズ**について考えます。
+定義 3.3.2.と同様に定義できるらしい。</p>
+
+<blockquote>
+<p>定義 3.3.2. 項 t のサイズを size(t) と書き、次のように定義する。</p>
+
+<pre><code>size(true)               = 1
+size(false)              = 1
+size(0)                  = 1
+size(succ t1)            = size(t1) + 1
+size(pred t1)            = size(t1) + 1
+size(iszero t1)          = size(t1) + 1
+size(ift1 thent2 elset3) = size(t1) + size(t2) + size(t3) + 1
+</code></pre>
+</blockquote>
+
+<p>つまり、tのサイズはtの抽象構文木のノードの数となります。</p>
+
+<pre><code>size(x)      = 1
+size(λx. t1) = size(t1) + 1
+size(t1 t2)  = size(t1) + size(t2)
+</code></pre>
+
+<p>さらに、項に現れる自由変数の集合も再帰的に定義ができます。</p>
+
+<blockquote>
+<p>定義5.3.2. 項tの自由変数(freevariable)の集合は、FV(t)と書かれ、以下のように定義できる。</p>
+
+<pre><code>FV(x)      = {x}
+FV(λx. t1) = FV(t1) \ {x}
+FV(t1 t2)  = FV(t1)∪FV(t2)
+</code></pre>
+</blockquote>
+
+<p>変数xという項の自由変数の集合は、xただ1つからなる集合である、という1つ目の定義が再帰的定義の基底です。
+残りはラムダ計算の文法の再帰的定義に合わせて、</p>
+
+<ul>
+<li>ラムダ抽象の引数は束縛変数（自由でない）ので抽象本体の自由変数の集合と{x}の差集合</li>
+<li>関数適用はt1とt2の2つの項の自由変数の集合の和集合</li>
+</ul><p>という感じ。</p>
+
+<blockquote>
+<p>演習5.3.3. 任意の項tについて|FV(t)| ≤ size(t)が成り立つことを注意深く証明せよ。</p>
+</blockquote>
+
+<p>tのサイズについて再帰的に証明します。
+つまり、tより小さなサイズの項t1およびt2について、
+|FV(t1)| ≤ size(t1)が成り立つと仮定し(t2も同様)、
+tについても同様に成り立つことを示す。</p>
+
+<p>ラムダ計算の定義の3つの右辺それぞれについて考える。</p>
+
+<p>(1) t = xの場合
+これは明らかに成り立つ。</p>
+
+<pre><code>|FV(x)| = |{x}| = 1 = size(x)
+</code></pre>
+
+<p>(2) t = λx. t1の場合</p>
+
+<pre><code>|FV(λx. t1)| = |FV(t1) \ {x}|
+</code></pre>
+
+<p>ここで、|FV(t1)| ≤ size(t1)という仮定より、|FV(t1) \ {x}| ≤ size(t1)である。
+つまり、|FV(t)| ≤ |FV(t1)|は常に成り立つ。
+仮定より|FV(t)| ≤ |FV(t1)| ≤ size(t1) ≤ size(t)が成り立つ。</p>
+
+<p>(3) t = t1 t2の場合</p>
+
+<pre><code>|FV(t1 t2)| = |FV(t1)∪FV(t2)|
+</code></pre>
+
+<p>であり、仮定より|FV(t1)∪FV(t2)| ≤ size(t1) + size(t2)となる。
+定義より、size(t1) + size(t2) = size(t1 t2)であるから、
+|FV(t1 t2)| ≤ size(t1 t2)が成り立つ。</p>
       </section>
     </div>
 
