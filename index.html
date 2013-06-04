@@ -109,8 +109,15 @@ c0 = λs. λz. z;
 
 <p>何が間違っているのでしょうか？</p>
 
+<hr><p>更に追記：</p>
+
+<p>これは、いわゆる振る舞い等価では？</p>
+
 <h2>
 <a name="53-" class="anchor" href="#53-"><span class="octicon octicon-link"></span></a>5.3 形式的議論</h2>
+
+<h3>
+<a name="-1" class="anchor" href="#-1"><span class="octicon octicon-link"></span></a>構文</h3>
 
 <p>まずラムダ計算の構文を形式的に定義します。</p>
 
@@ -197,6 +204,222 @@ tについても同様に成り立つことを示す。</p>
 <p>であり、仮定より<code>|FV(t1)∪FV(t2)| ≤ size(t1) + size(t2)</code>となる。
 定義より、<code>size(t1) + size(t2) = size(t1 t2)</code>であるから、
 <code>|FV(t1 t2)| ≤ size(t1 t2)</code>が成り立つ。</p>
+
+<h3>
+<a name="-2" class="anchor" href="#-2"><span class="octicon octicon-link"></span></a>代入</h3>
+
+<p>代入の操作について、形式的に定義することを試みる。</p>
+
+<p>まず最も素朴な定義から出発する。</p>
+
+<blockquote>
+<pre><code>[x |-&gt; s] x        = s
+[x |-&gt; s] y        = y   (y != xの場合)
+[x |-&gt; s] (λy. t1) = λy. [x |-&gt; s] t1
+[x |-&gt; s] (t1 t2)  = ([x |-&gt; s] t1) ([x |-&gt; s] t2) 
+</code></pre>
+</blockquote>
+
+<p>一見正しそうに見えるが、この代入はどうなるか？</p>
+
+<pre><code>[x |-&gt; y] (λx. x)
+</code></pre>
+
+<p>3つ目の定義より、抽象本体のxをyで置き換えて、こうなる。</p>
+
+<pre><code>[x |-&gt; y] (λx. x) = λx. y
+</code></pre>
+
+<p>これは、関数抽象において、束縛変数の名前を問わないという直感に反する。
+たとえば次の代入の左辺は明らかに上の定義と等価だが、右辺は異なる。</p>
+
+<pre><code>[x |-&gt; y] (λz. z) = λz. z
+</code></pre>
+
+<p>ここでの問題は、自由変数と束縛変数を区別しなかったことにある。</p>
+
+<blockquote>
+<p>代入のこの素朴な定義で犯した最初の誤りは、明らかに、変数 x の項 t 内での自由な出現と、束 縛された出現を区別しなかったことである。</p>
+</blockquote>
+
+<p>つまり、置き換えの対象となる項の中に、変換規則の左辺と同じ名前の束縛変数があったら、そこで簡約を中止しなければならない。 この場合は以下の様な定義で表される。</p>
+
+<blockquote>
+<pre><code>[x |-&gt; s] x        = s
+[x |-&gt; s] y        = y                (y != xの場合)
+[x |-&gt; s] (λy. t1) = λy. t1           (y == xの場合)
+[x |-&gt; s] (λy. t1) = λy. [x |-&gt; s] t1 (y != xの場合)
+[x |-&gt; s] (t1 t2)  = ([x |-&gt; s] t1) ([x |-&gt; s] t2) 
+</code></pre>
+</blockquote>
+
+<p>3行目がふえた。
+しかし、これでも不完全である。</p>
+
+<blockquote>
+<pre><code>[x |-&gt; z] (λz. x) = λz. z
+</code></pre>
+</blockquote>
+
+<p>今度は先ほどの例とは逆に、逆に束縛変数と競合してしまった。
+そこで、制限を追加する。</p>
+
+<blockquote>
+<pre><code>[x |-&gt; s] x        = s
+[x |-&gt; s] y        = y                (x != yの場合)
+[x |-&gt; s] (λy. t1) = λy. t1           (x == yの場合)
+[x |-&gt; s] (λy. t1) = λy. [x |-&gt; s] t1 (y != xかつFV(s)がyを含まない場合)
+[x |-&gt; s] (t1 t2)  = ([x |-&gt; s] t1) ([x |-&gt; s] t2) 
+</code></pre>
+</blockquote>
+
+<p>これで、少なくとも代入がおこなわれる時には、正しく動く。
+しかし、制限を加えた結果、代入はもはや全域的な操作ではなくなった。
+例えば、</p>
+
+<pre><code>[x |-&gt; y z] (λy. x y) 
+</code></pre>
+
+<p>は、どのような結果も与えない。代入のどのルールも当てはまらないからである。
+この問題に対する修正として、以下の様な慣習を取り入れる。</p>
+
+<p>慣習 5.3.4. 束縛変数の名前のみが異なる項は、任意の文脈で置き換え可能である。</p>
+
+<p>例えば、<code>[x |-&gt; y z] (λy. x y)</code>を計算したいときには、
+最初に<code>(λy. x y)</code>を例えば<code>(λw. x w)</code>へと書き換える。
+その後、<code>[x |-&gt; y z](λw. x w)</code> を計算し、<code>(λw. y z w)</code> を得る。</p>
+
+<p>代入操作が未定義になるようなときには、常にこの慣習を適用することで、完全な代入の定義が得られる。</p>
+
+<blockquote>
+<pre><code>[x |-&gt; s] x        = s
+[x |-&gt; s] y        = y                (x != yの場合)
+[x |-&gt; s] (λy. t1) = λy. [x |-&gt; s] t1 (y != xかつFV(s)がyを含まない場合)
+[x |-&gt; s] (t1 t2)  = ([x |-&gt; s] t1) ([x |-&gt; s] t2) 
+</code></pre>
+</blockquote>
+
+<p><code>y==x</code>となる時や、 <code>FV(s)</code>がyを含むようなときには、抽象本体の束縛変数yを任意の変数名に置き換えればよい。
+以上で、全域的な、破綻のない代入の形式的定義が得られた。</p>
+
+<h3>
+<a name="-3" class="anchor" href="#-3"><span class="octicon octicon-link"></span></a>操作的意味論</h3>
+
+<p>まとめとして、操作的意味論の要約を示す。</p>
+
+<p>構文:</p>
+
+<blockquote>
+<pre><code>t ::=                     項:
+      x                 変数
+      λx.t        ラムダ抽象
+      t t           関数適用
+
+v ::=                     値:
+      λx.t        ラムダ抽象
+</code></pre>
+</blockquote>
+
+<p>評価:</p>
+
+<blockquote>
+<pre><code>   t1 -&gt; t1'
+---------------      (E-APP1)
+t1 t2 -&gt; t1' t2
+
+   t2 -&gt; t2'
+---------------      (E-APP2)
+v1 t2 -&gt; v1 t2'
+
+(λx. t12) v2 -&gt; [x |-&gt; v2] t12  (E-APPABS)
+</code></pre>
+</blockquote>
+
+<p>E-APPABSは計算規則であり、ラムダ計算唯一の簡約、関数適用を表す。
+D-APP1とE-APP2は3章でもやったように、評価戦略を決定する合同規則である。</p>
+
+<p>vは値、つまりラムダ抽象の上を動くことに注意すると、
+これを規則に含むE-APP2とE-APPABSは、その項がラムダ抽象に簡約されるまで適用できない。
+つまり、</p>
+
+<ol>
+<li>E-APP1によって関数適用の左側を評価する</li>
+<li>E-APP2によって関数適用の右側を評価する</li>
+<li>最後にE-APPABSによって関数適用という評価を行</li>
+</ol><p>これは、値呼び評価戦略である。</p>
+
+<blockquote>
+<p>演習5.3.6. これらの規則を変更し、他の三種の評価戦略(完全ベータ簡約、正規順序、遅延評価)を表現するようにせよ。</p>
+</blockquote>
+
+<p>完全ベータ簡約は非決定である。
+簡約順序に基底がなく、全ての簡約基はいかなるタイミングでも簡約可能だからである。</p>
+
+<p>完全ベータ簡約の評価:</p>
+
+<blockquote>
+<pre><code>    t1 -&gt; t1'
+ ---------------      (E-APP1)
+ t1 t2 -&gt; t1' t2
+
+    t2 -&gt; t2'
+ ---------------      (E-APP2)
+ v1 t2 -&gt; v1 t2'
+
+    t1 -&gt; t1'
+-----------------     (E-ABS)
+λx. t1 -&gt; λx. t1'
+
+(λx. t12) v2 -&gt; [x |-&gt; v2] t12  (E-APPABS)
+</code></pre>
+</blockquote>
+
+<p>正規順序簡約の場合、外側の簡約基から評価しなければならない。
+評価規則を正しく書き下すため、項を以下のように分類する。</p>
+
+<blockquote>
+<pre><code>nf ::=            正規形         
+       λx. nf              
+       nanf
+
+nanf ::=          非抽象正規形           
+         x
+         nanf nf
+na ::=            非抽象
+       x
+       t1 t2
+</code></pre>
+</blockquote>
+
+<p>正規順序簡約は、完全ベータ簡約に評価の順序を与えたものである。</p>
+
+<blockquote>
+<pre><code>      na -&gt; t1'
+   ---------------      (E-APP1)
+   na t2 -&gt; t1' t2
+
+      t2 -&gt; t2'
+---------------------   (E-APP2)
+nanf1 t2 -&gt; nanf1 t2'
+
+      t1 -&gt; t1'
+   ---------------      (E-ABS)
+   λx. t1 -&gt; λx. t1'
+
+   (λx. t12) v2 -&gt; [x |-&gt; v2] t12  (E-APPABS)
+</code></pre>
+</blockquote>
+
+<p>遅延評価の規則は簡単である。抽象内部は評価されないので、規則E-APP2が削られている。</p>
+
+<blockquote>
+<pre><code>   t1 -&gt; t1'
+---------------      (E-APP1)
+t1 t2 -&gt; t1' t2
+
+(λx. t12) v2 -&gt; [x |-&gt; v2] t12  (E-APPABS)
+</code></pre>
+</blockquote>
       </section>
     </div>
 
