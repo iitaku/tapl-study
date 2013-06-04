@@ -169,7 +169,7 @@ FV(t1 t2)  = FV(t1)∪FV(t2)
 
 <p>tのサイズについて再帰的に証明します。
 つまり、tより小さなサイズの項t1およびt2について、
-|FV(t1)| ≤ size(t1)が成り立つと仮定し(t2も同様)、
+<code>|FV(t1)| ≤ size(t1)</code>が成り立つと仮定し(t2も同様)、
 tについても同様に成り立つことを示す。</p>
 
 <p>ラムダ計算の定義の3つの右辺それぞれについて考える。</p>
@@ -185,18 +185,18 @@ tについても同様に成り立つことを示す。</p>
 <pre><code>|FV(λx. t1)| = |FV(t1) \ {x}|
 </code></pre>
 
-<p>ここで、|FV(t1)| ≤ size(t1)という仮定より、|FV(t1) \ {x}| ≤ size(t1)である。
-つまり、|FV(t)| ≤ |FV(t1)|は常に成り立つ。
-仮定より|FV(t)| ≤ |FV(t1)| ≤ size(t1) ≤ size(t)が成り立つ。</p>
+<p>ここで、<code>|FV(t1)| ≤ size(t1)</code>という仮定より、<code>|FV(t1) \ {x}| ≤ size(t1)</code>である。
+つまり、<code>|FV(t)| ≤ |FV(t1)|</code>は常に成り立つ。
+仮定より<code>|FV(t)| ≤ |FV(t1)| ≤ size(t1) ≤ size(t)</code>が成り立つ。</p>
 
 <p>(3) t = t1 t2の場合</p>
 
 <pre><code>|FV(t1 t2)| = |FV(t1)∪FV(t2)|
 </code></pre>
 
-<p>であり、仮定より|FV(t1)∪FV(t2)| ≤ size(t1) + size(t2)となる。
-定義より、size(t1) + size(t2) = size(t1 t2)であるから、
-|FV(t1 t2)| ≤ size(t1 t2)が成り立つ。</p>
+<p>であり、仮定より<code>|FV(t1)∪FV(t2)| ≤ size(t1) + size(t2)</code>となる。
+定義より、<code>size(t1) + size(t2) = size(t1 t2)</code>であるから、
+<code>|FV(t1 t2)| ≤ size(t1 t2)</code>が成り立つ。</p>
       </section>
     </div>
 
